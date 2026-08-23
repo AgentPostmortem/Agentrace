@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from .checks import analyse
@@ -31,7 +32,11 @@ def _load(args) -> list[AgentRun]:
         sessions = parse_all(Path(args.dir) if args.dir else None)
     runs = [r for s in sessions for r in s.runs]
     if not runs:
-        console.print("[yellow]No subagent runs found.[/] Looked in ~/.claude/projects unless --dir was given.")
+        source = args.file or args.dir or "~/.claude/projects"
+        console.print(
+            f"[yellow]No subagent runs found.[/] Looked in {escape(source)}.",
+            soft_wrap=True,
+        )
     return runs
 
 
@@ -155,10 +160,17 @@ def cmd_stats(args) -> int:
     return 0
 
 
+def _existing_file(value: str) -> str:
+    if not Path(value).is_file():
+        raise argparse.ArgumentTypeError(f"not a file: {value}")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="agentrace", description=__doc__.split("\n")[0])
-    p.add_argument("--dir", help="transcript root (default ~/.claude/projects)")
-    p.add_argument("--file", help="a single .jsonl transcript")
+    source = p.add_mutually_exclusive_group()
+    source.add_argument("--dir", help="transcript root (default ~/.claude/projects)")
+    source.add_argument("--file", type=_existing_file, help="a single .jsonl transcript")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("list", help="list subagent runs").set_defaults(func=cmd_list)

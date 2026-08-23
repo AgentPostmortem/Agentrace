@@ -104,7 +104,7 @@ From a clone, for development:
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 17 tests
+pytest -q          # 22 tests
 ```
 
 No session of your own to look at yet? A synthetic one ships with the repo:
@@ -132,4 +132,4 @@ as such rather than vanish from the report.
 
 ## Status
 
-Working, 17 tests, validated against a real 34MB session with 152 subagent runs.
+Working, 22 tests, validated against a real 34MB session with 152 subagent runs.
