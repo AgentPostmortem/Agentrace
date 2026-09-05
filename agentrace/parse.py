@@ -127,7 +127,9 @@ def parse_session(path: Path) -> Session:
                 continue
             btype = block.get("type")
             if btype == "tool_use" and block.get("name") in ("Agent", "Task"):
-                uses[block["id"]] = {"input": block.get("input") or {}, "ts": rec.get("timestamp")}
+                bid = block.get("id")
+                if bid:
+                    uses[bid] = {"input": block.get("input") or {}, "ts": rec.get("timestamp")}
             elif btype == "tool_result":
                 tid = block.get("tool_use_id")
                 if tid:

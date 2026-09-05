@@ -146,6 +146,24 @@ def test_non_agent_tools_are_ignored(tmp_path):
     assert parse_session(p).runs == []
 
 
+def test_tool_use_without_id_is_skipped(tmp_path):
+    """A tool_use block missing an id should be skipped rather than crashing with KeyError."""
+    p = tmp_path / "s.jsonl"
+    p.write_text(
+        json.dumps(
+            {
+                "message": {
+                    "content": [
+                        {"type": "tool_use", "name": "Agent", "input": {"prompt": "p"}}
+                    ]
+                }
+            }
+        )
+    )
+    s = parse_session(p)
+    assert s.runs == []
+
+
 # --------------------------------------------------------------------------- checks
 
 
