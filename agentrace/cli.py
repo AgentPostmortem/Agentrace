@@ -1,9 +1,9 @@
 """agentrace CLI.
 
-    agentrace list                 what did my subagents do
-    agentrace check               flag the suspicious results
-    agentrace show <id>           read one run in full
-    agentrace stats               where the time went
+agentrace list                 what did my subagents do
+agentrace check               flag the suspicious results
+agentrace show <id>           read one run in full
+agentrace stats               where the time went
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from statistics import median
 
 from rich.console import Console
 from rich.markup import escape
@@ -80,7 +81,9 @@ def cmd_check(args) -> int:
             continue
         flagged += 1
         total_findings += len(findings)
-        console.print(f"\n[bold]{r.description or '(no description)'}[/] [dim]{r.tool_use_id[-8:]}[/]")
+        console.print(
+            f"\n[bold]{r.description or '(no description)'}[/] [dim]{r.tool_use_id[-8:]}[/]"
+        )
         for f in findings:
             colour = _SEV_COLOUR.get(f.severity, "white")
             console.print(f"  [{colour}]{f.severity:<6}[/] [bold]{f.check}[/]  {f.message}")
@@ -136,9 +139,9 @@ def cmd_stats(args) -> int:
     table.add_row("errored", f"{errors:,}")
     table.add_row("empty results", f"{empty:,}")
     if durations:
-        table.add_row("total agent time", f"{total_s/3600:.1f} h")
-        table.add_row("median run", f"{sorted(durations)[len(durations)//2]:.0f} s")
-        table.add_row("slowest run", f"{max(durations)/60:.1f} min")
+        table.add_row("total agent time", f"{total_s / 3600:.1f} h")
+        table.add_row("median run", f"{median(durations):.0f} s")
+        table.add_row("slowest run", f"{max(durations) / 60:.1f} min")
     table.add_row("prompt chars written", f"{prompt_chars:,}")
     table.add_row("result chars returned", f"{result_chars:,}")
     console.print(table)
