@@ -2,6 +2,13 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from argparse import Namespace
+from datetime import UTC, datetime, timedelta
+
+import pytest
+
+from agentrace import cli
+from agentrace.parse import AgentRun
 
 
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
@@ -11,6 +18,42 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         check=False,
         text=True,
     )
+
+
+@pytest.mark.parametrize(
+    "durations,expected",
+    [
+        ([10, 20], "15 s"),
+        ([30, 10, 20], "20 s"),
+        ([10], "10 s"),
+        ([10, None, 20], "15 s"),
+        ([None], None),
+    ],
+)
+def test_stats_median(durations, expected, monkeypatch, capsys):
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    runs = [
+        AgentRun(
+            tool_use_id=str(i),
+            description="test",
+            prompt="prompt",
+            result="result",
+            started_at=start,
+            ended_at=start + timedelta(seconds=duration) if duration is not None else None,
+        )
+        for i, duration in enumerate(durations)
+    ]
+    monkeypatch.setattr(cli, "_load", lambda args: runs)
+
+    assert cli.cmd_stats(Namespace(json=False)) == 0
+
+    rows = capsys.readouterr().out.splitlines()
+    median_rows = [row for row in rows if "median run" in row]
+    if expected is None:
+        assert median_rows == []
+    else:
+        assert len(median_rows) == 1
+        assert " ".join(median_rows[0].split()) == f"median run {expected}"
 
 
 def test_file_and_dir_are_mutually_exclusive(tmp_path):
