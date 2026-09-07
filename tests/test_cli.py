@@ -56,6 +56,27 @@ def test_stats_median(durations, expected, monkeypatch, capsys):
         assert " ".join(median_rows[0].split()) == f"median run {expected}"
 
 
+def test_stats_excludes_clock_skewed_duration(monkeypatch, capsys):
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    runs = [
+        AgentRun(
+            tool_use_id=str(i),
+            description="test",
+            prompt="prompt",
+            result="result",
+            started_at=start,
+            ended_at=start + timedelta(seconds=duration),
+        )
+        for i, duration in enumerate([-5, 10, 20])
+    ]
+    monkeypatch.setattr(cli, "_load", lambda args: runs)
+    assert cli.cmd_stats(Namespace(json=True)) == 0
+    output = capsys.readouterr().out
+    assert '"total_seconds": 30.0' in output
+    assert "median run 15 s" in " ".join(output.split())
+    assert runs[0].duration_s is None
+
+
 def test_file_and_dir_are_mutually_exclusive(tmp_path):
     transcript = tmp_path / "session.jsonl"
     transcript.write_text("")
