@@ -39,7 +39,8 @@ class AgentRun:
     @property
     def duration_s(self) -> float | None:
         if self.started_at and self.ended_at:
-            return (self.ended_at - self.started_at).total_seconds()
+            duration = (self.ended_at - self.started_at).total_seconds()
+            return duration if duration >= 0 else None
         return None
 
     @property
