@@ -171,6 +171,7 @@ def _existing_file(value: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="agentrace", description=__doc__.split("\n")[0])
+    p.add_argument("--version", action="version", version="%(prog)s 0.1.0")
     source = p.add_mutually_exclusive_group()
     source.add_argument("--dir", help="transcript root (default ~/.claude/projects)")
     source.add_argument("--file", type=_existing_file, help="a single .jsonl transcript")
