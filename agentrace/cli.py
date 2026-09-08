@@ -30,7 +30,17 @@ def _load(args) -> list[AgentRun]:
     if args.file:
         sessions = [parse_session(Path(args.file))]
     else:
-        sessions = parse_all(Path(args.dir) if args.dir else None)
+        path = Path(args.dir) if args.dir else None
+
+        if path and path.is_file():
+            console.print(
+                f"[yellow]Hint:[/] {escape(str(path))} is a file. "
+                "Use [bold]--file[/] instead of [bold]--dir[/]."
+            )
+            return []
+
+        sessions = parse_all(path)
+
     runs = [r for s in sessions for r in s.runs]
     if not runs:
         source = args.file or args.dir or "~/.claude/projects"

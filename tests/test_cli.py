@@ -116,3 +116,15 @@ def test_empty_result_names_selected_directory(tmp_path):
     assert result.returncode == 0
     assert "No subagent runs found." in result.stdout
     assert f"Looked in {tmp_path}." in result.stdout
+
+def test_dir_given_file_hints_to_use_file(tmp_path):
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text("")
+    result = run_cli("--dir", str(transcript), "list")
+    assert "--file" in result.stdout
+
+
+def test_version():
+    result = run_cli("--version")
+    assert result.returncode == 0
+    assert "0.1.0" in result.stdout
