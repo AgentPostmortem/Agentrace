@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Iterator
 
@@ -75,7 +75,9 @@ def _ts(value: str | None) -> datetime | None:
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        # Treat missing offsets as UTC, independently of the reader's local timezone.
+        return parsed.replace(tzinfo=UTC) if parsed.tzinfo is None else parsed
     except ValueError:
         return None
 
@@ -159,7 +161,7 @@ def parse_session(path: Path) -> Session:
             )
         )
 
-    runs.sort(key=lambda r: (r.started_at or datetime.min.replace(tzinfo=None), r.tool_use_id))
+    runs.sort(key=lambda r: (r.started_at or datetime.min.replace(tzinfo=UTC), r.tool_use_id))
     return Session(session_id=session_id, path=path, runs=runs)
 
 
