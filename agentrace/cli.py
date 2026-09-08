@@ -101,6 +101,9 @@ def cmd_check(args) -> int:
 
 def cmd_show(args) -> int:
     runs = _load(args)
+    if args.id == "":
+        console.print("[red]Please provide a run ID[/]", file=sys.stderr)
+        return 1
     match = [r for r in runs if r.tool_use_id.endswith(args.id)]
     if not match:
         console.print(f"[red]No run matching {args.id!r}[/]")
