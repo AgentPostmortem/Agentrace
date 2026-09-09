@@ -111,6 +111,9 @@ def cmd_check(args) -> int:
 
 def cmd_show(args) -> int:
     runs = _load(args)
+    if args.id == "":
+        console.print("[red]Please provide a run ID[/]", file=sys.stderr)
+        return 1
     match = [r for r in runs if r.tool_use_id.endswith(args.id)]
     if not match:
         console.print(f"[red]No run matching {args.id!r}[/]")
@@ -181,6 +184,7 @@ def _existing_file(value: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="agentrace", description=__doc__.split("\n")[0])
+    p.add_argument("--version", action="version", version="%(prog)s 0.1.0")
     source = p.add_mutually_exclusive_group()
     source.add_argument("--dir", help="transcript root (default ~/.claude/projects)")
     source.add_argument("--file", type=_existing_file, help="a single .jsonl transcript")

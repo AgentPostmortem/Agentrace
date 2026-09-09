@@ -108,6 +108,14 @@ def test_empty_result_names_selected_file(tmp_path):
     assert result.returncode == 0
     assert "No subagent runs found." in result.stdout
     assert f"Looked in {transcript}." in result.stdout
+    
+def test_show_empty_id_errors(tmp_path):
+    transcript = tmp_path / "empty.jsonl"
+    transcript.write_text("")
+    result = run_cli("--file", str(transcript), "show", "")
+
+    assert result.returncode == 1
+    assert "Please provide a run ID" in result.stderr
 
 
 def test_empty_result_names_selected_directory(tmp_path):

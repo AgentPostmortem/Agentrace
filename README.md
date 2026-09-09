@@ -120,6 +120,9 @@ Zero dependencies beyond `rich`. No API keys, no network: it reads local files.
 
 ## Design notes
 
+**Timestamps without an offset are treated as UTC.** Explicit offsets are respected when sorting
+runs and calculating durations. Runs with missing or invalid timestamps sort before dated runs.
+
 **Two passes over the transcript, not one.** Results can appear before every use has been seen in
 unusual orderings. A 34MB file is cheap to scan twice compared to getting the pairing subtly wrong.
 
