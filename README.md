@@ -127,8 +127,9 @@ Zero dependencies beyond `rich`. No API keys, no network: it reads local files.
 **Timestamps without an offset are treated as UTC.** Explicit offsets are respected when sorting
 runs and calculating durations. Runs with missing or invalid timestamps sort before dated runs.
 
-**Two passes over the transcript, not one.** Results can appear before every use has been seen in
-unusual orderings. A 34MB file is cheap to scan twice compared to getting the pairing subtly wrong.
+**One pass over the transcript, with two maps.** `tool_use` and `tool_result` blocks are collected
+into separate maps and joined by `tool_use_id` afterwards. This keeps pairing correct when records
+appear in unusual orderings.
 
 **A torn final line is skipped, not fatal.** A live session being appended to yields half-written
 JSON. Refusing to parse would mean you cannot analyse a run until it is over, which is exactly
