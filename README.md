@@ -55,6 +55,7 @@ weeks. None of them are hypothetical.
 | `hedged_claim` | An agent said a company *"appears to be"* hiring. That became a fact by the time it reached a decision. Hedges are honest; the bug is flattening them downstream. |
 | `unverified_urls` | Twenty URLs cited, none opened. That is autocomplete, not research. |
 | `no_output_contract` / `thin_prompt` | The failure that is **yours, not the model's**. A task with no definition of done cannot be verified, because you never really asked the question. |
+| `unquantified` | A precise count/list prompt answered with *"several hot paths worth investigating"* and no digits, bullets, or table rows. |
 | `slow_run` | A subagent running 25 minutes is usually looping or retrying. |
 
 Run against the session that motivated the tool, it flags **36 of 152 runs**: 7 agents that died on

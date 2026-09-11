@@ -202,6 +202,47 @@ def check_prompt_hygiene(run: AgentRun) -> list[Finding]:
     return out
 
 
+
+def check_unquantified(run: AgentRun) -> list[Finding]:
+    """A counting prompt answered with vague quantity and no countable output.
+
+    The real case: "report every failing test as node ids" came back as "several hot
+    paths worth investigating" — zero digits, bullets, or table rows.
+    """
+    asks_to_count = re.search(
+        r"\b(?:count|counts|how many|number of|enumerate|enumerat(?:e|ing)|"
+        r"list (?:every|all|each)|report every|every \w+ as)\b",
+        run.prompt,
+        re.I,
+    )
+    if not asks_to_count:
+        return []
+
+    result = run.result
+    has_digit = re.search(r"\d", result) is not None
+    has_bullet = re.search(r"(?m)^\s*(?:[-*+]|\d+[.)])\s+\S", result) is not None
+    has_table_row = re.search(r"(?m)^\s*\|.+\|\s*$", result) is not None
+    if has_digit or has_bullet or has_table_row:
+        return []
+
+    vague = re.search(
+        r"\b(?:several|some|a few|a number of|various|numerous|many|multiple)\b",
+        result,
+        re.I,
+    )
+    if not vague:
+        return []
+
+    return [
+        Finding(
+            "unquantified",
+            "low",
+            "Prompt asked to count, list, or enumerate, but the result uses a vague quantifier and has no digits, bullets, or table rows.",
+            _context(result, vague.start()),
+        )
+    ]
+
+
 def check_runaway(run: AgentRun, slow_s: float = 900.0) -> list[Finding]:
     """Very long runs.
 
@@ -227,6 +268,7 @@ CHECKS: list[Callable[[AgentRun], list[Finding]]] = [
     check_absence_as_evidence,
     check_url_without_verification,
     check_prompt_hygiene,
+    check_unquantified,
     check_runaway,
 ]
 
