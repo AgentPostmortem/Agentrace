@@ -261,6 +261,26 @@ def test_prompt_with_output_contract_is_not_flagged():
     assert "no_output_contract" not in _codes(r)
 
 
+
+def test_unquantified_flags_vague_answer_to_counting_prompt():
+    """'report every failing test as node ids' answered with 'several hot paths'."""
+    r = _run(
+        prompt="Run the suite and report every failing test as node ids with its assertion message.",
+        result="There are several hot paths worth investigating. " + "x" * 200,
+    )
+    findings = [f for f in analyse(r) if f.check == "unquantified"]
+    assert findings and findings[0].severity == "low"
+
+
+def test_unquantified_clean_when_result_has_counts():
+    r = _run(
+        prompt="Run the suite and report every failing test as node ids with its assertion message.",
+        result="3 failing: tests/test_a.py::test_one, tests/test_b.py::test_two, tests/test_c.py::test_three. "
+        + "x" * 200,
+    )
+    assert "unquantified" not in _codes(r)
+
+
 def test_slow_run_is_flagged():
     r = _run(
         started_at=datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc),
