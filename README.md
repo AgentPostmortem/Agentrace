@@ -88,6 +88,10 @@ agentrace stats --json          # aggregate, machine-readable
 
 Point it somewhere else with `--dir` or at one file with `--file`.
 
+`show --max N` limits each prompt and result to at most `N` characters (default
+4000). `N` must be a non-negative integer; zero hides the text, while negative
+values are usage errors (exit code 2).
+
 ## Install
 
 **PyPI:** https://pypi.org/project/agentrace-cli/

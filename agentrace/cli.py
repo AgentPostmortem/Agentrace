@@ -176,6 +176,13 @@ def cmd_stats(args) -> int:
     return 0
 
 
+def _nonnegative_int(value: str) -> int:
+    number = int(value)
+    if number < 0:
+        raise argparse.ArgumentTypeError("must be a non-negative integer")
+    return number
+
+
 def _existing_file(value: str) -> str:
     if not Path(value).is_file():
         raise argparse.ArgumentTypeError(f"not a file: {value}")
@@ -199,7 +206,12 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("show", help="read one run in full")
     s.add_argument("id", help="tool_use_id or its last 8 chars")
-    s.add_argument("--max", type=int, default=4000, help="truncate long text")
+    s.add_argument(
+        "--max",
+        type=_nonnegative_int,
+        default=4000,
+        help="maximum characters per prompt/result (non-negative; default: 4000)",
+    )
     s.set_defaults(func=cmd_show)
 
     st = sub.add_parser("stats", help="aggregate stats")
