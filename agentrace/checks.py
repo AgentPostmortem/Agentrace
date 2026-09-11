@@ -81,6 +81,40 @@ def check_refused_or_gave_up(run: AgentRun) -> list[Finding]:
     return []
 
 
+def check_destructive_command(run: AgentRun) -> list[Finding]:
+    """Runnable destructive shell/database commands without a nearby safety warning.
+
+    A subagent can emit commands that an orchestrator or human may copy-paste. Destructive commands
+    should be paired with a dry-run, backup, or explicit verification warning before execution.
+    """
+    patterns = [
+        r"\brm\s+-[^\n]*r[^\n]*f[^\n]*\s+\S+",
+        r"\bDROP\s+TABLE\b",
+        r"\bkubectl\s+delete\b",
+        r":\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:",
+    ]
+    caution = re.compile(r"\b(?:dry[- ]?run|backup|verify first|check first|confirm first)\b|--dry-run", re.I)
+    head = run.result[:1500]
+
+    for pattern in patterns:
+        m = re.search(pattern, head, re.I)
+        if not m:
+            continue
+        start = max(0, m.start() - 140)
+        end = min(len(head), m.end() + 140)
+        if caution.search(head[start:end]):
+            continue
+        return [
+            Finding(
+                "destructive_command",
+                "high",
+                "Runnable destructive command without a nearby dry-run, backup, or verification warning.",
+                _context(head, m.start()),
+            )
+        ]
+    return []
+
+
 def check_unverified_claim(run: AgentRun) -> list[Finding]:
     """Hedged language presented as a finding.
 
@@ -264,6 +298,7 @@ def check_runaway(run: AgentRun, slow_s: float = 900.0) -> list[Finding]:
 CHECKS: list[Callable[[AgentRun], list[Finding]]] = [
     check_empty_result,
     check_refused_or_gave_up,
+    check_destructive_command,
     check_unverified_claim,
     check_absence_as_evidence,
     check_url_without_verification,
