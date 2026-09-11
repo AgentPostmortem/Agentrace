@@ -116,8 +116,8 @@ def _records(path: Path) -> Iterator[dict]:
 def parse_session(path: Path) -> Session:
     """Pull every Agent delegation out of one transcript.
 
-    Two passes over the file rather than one: results can appear before we have seen every use in
-    weird orderings, and a 34MB file is cheap to scan twice compared to getting this subtly wrong.
+    One pass collects tool_use and tool_result blocks into separate maps, then joins them by
+    tool_use_id. Buffering both sides keeps pairing correct when records arrive in a weird order.
     """
     uses: dict[str, dict] = {}
     results: dict[str, dict] = {}
