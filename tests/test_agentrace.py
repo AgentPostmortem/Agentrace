@@ -219,6 +219,15 @@ def test_absence_as_evidence_is_caught():
     assert "absence_as_evidence" in _codes(r)
 
 
+def test_self_contradiction_is_caught_with_enumerated_evidence():
+    r = _run(result="No open issues:\n1. #12 auth bypass\n2. #14 token leak\n" + "x" * 200)
+    findings = [f for f in analyse(r) if f.check == "self_contradiction"]
+    assert findings and findings[0].severity == "medium"
+
+def test_self_contradiction_plain_absence_is_clean():
+    r = _run(result="None found after checking the issue tracker. " + "x" * 200)
+    assert "self_contradiction" not in _codes(r)
+
 def test_hedged_claim_is_caught_but_only_low():
     """Hedging is honest. The bug is the hedge getting flattened into fact downstream, so this is
     a note, not an alarm."""
