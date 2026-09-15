@@ -136,3 +136,19 @@ def test_version():
     result = run_cli("--version")
     assert result.returncode == 0
     assert "0.1.0" in result.stdout
+
+
+def test_check_prints_bracketed_description_literally(monkeypatch, capsys):
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    run = AgentRun(
+        tool_use_id="toolu_test123456",
+        description="run [bold]pwned[/bold] test",
+        prompt="x" * 500,
+        result="I could not complete the task because access was denied.",
+        started_at=start,
+        ended_at=start + timedelta(seconds=1),
+    )
+    monkeypatch.setattr(cli, "_load", lambda args: [run])
+
+    assert cli.cmd_check(Namespace(severity=None, strict=False)) == 0
+    assert "run [bold]pwned[/bold] test" in capsys.readouterr().out
