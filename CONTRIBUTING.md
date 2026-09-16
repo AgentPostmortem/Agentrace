@@ -11,7 +11,8 @@ Thanks for considering a contribution — issues and pull requests are welcome.
 ## Making a change
 
 - Keep pull requests focused and describe **what** changed and **why**.
-- Run the project's format, lint, and test steps (see the README) before pushing.
+- Run `ruff check .` and the project's test steps (see the README) before pushing.
+- Formatting is not currently enforced; Ruff is used for linting.
 - Add or update tests when you change behavior.
 - Update docs or the CHANGELOG when relevant.
 

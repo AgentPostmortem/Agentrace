@@ -16,8 +16,8 @@ checker at all, so severity is deliberately conservative.
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from .parse import AgentRun
 
@@ -68,7 +68,7 @@ def check_refused_or_gave_up(run: AgentRun) -> list[Finding]:
     ]
     head = run.result[:1500]
     for p in patterns:
-        m = re.search(p, head, re.I)
+        m = re.search(p, head, re.IGNORECASE)
         if m:
             return [
                 Finding(
@@ -93,11 +93,11 @@ def check_destructive_command(run: AgentRun) -> list[Finding]:
         r"\bkubectl\s+delete\b",
         r":\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:",
     ]
-    caution = re.compile(r"\b(?:dry[- ]?run|backup|verify first|check first|confirm first)\b|--dry-run", re.I)
+    caution = re.compile(r"\b(?:dry[- ]?run|backup|verify first|check first|confirm first)\b|--dry-run", re.IGNORECASE)
     head = run.result[:1500]
 
     for pattern in patterns:
-        m = re.search(pattern, head, re.I)
+        m = re.search(pattern, head, re.IGNORECASE)
         if not m:
             continue
         start = max(0, m.start() - 140)
@@ -132,7 +132,7 @@ def check_unverified_claim(run: AgentRun) -> list[Finding]:
     ]
     hits = []
     for p in hedges:
-        for m in re.finditer(p, run.result, re.I):
+        for m in re.finditer(p, run.result, re.IGNORECASE):
             hits.append(_context(run.result, m.start()))
     if hits:
         return [
@@ -160,7 +160,7 @@ def check_absence_as_evidence(run: AgentRun) -> list[Finding]:
         r"\bboard is empty\b",
     ]
     for p in patterns:
-        m = re.search(p, run.result, re.I)
+        m = re.search(p, run.result, re.IGNORECASE)
         if m:
             return [
                 Finding(
@@ -208,7 +208,7 @@ def check_url_without_verification(run: AgentRun) -> list[Finding]:
     urls = re.findall(r"https?://[^\s)\]<>\"']+", run.result)
     if len(urls) < 5:
         return []
-    verified = re.search(r"\b(?:verified|confirmed|checked|fetched|HTTP 200|status 200)\b", run.result, re.I)
+    verified = re.search(r"\b(?:verified|confirmed|checked|fetched|HTTP 200|status 200)\b", run.result, re.IGNORECASE)
     if not verified:
         return [
             Finding(
@@ -236,7 +236,7 @@ def check_prompt_hygiene(run: AgentRun) -> list[Finding]:
         r"\b(?:output|outputs|return|returns|format|formatted|respond|reply|write|writing|report|"
         r"summar[iy]|list|table|json|csv|markdown|schema|fields|columns|deliver)\b",
         run.prompt,
-        re.I,
+        re.IGNORECASE,
     )
 
     # Length alone is not the defect. "Run the suite and report every failing test as node ids
@@ -274,7 +274,7 @@ def check_unquantified(run: AgentRun) -> list[Finding]:
         r"\b(?:count|counts|how many|number of|enumerate|enumerat(?:e|ing)|"
         r"list (?:every|all|each)|report every|every \w+ as)\b",
         run.prompt,
-        re.I,
+        re.IGNORECASE,
     )
     if not asks_to_count:
         return []
@@ -289,7 +289,7 @@ def check_unquantified(run: AgentRun) -> list[Finding]:
     vague = re.search(
         r"\b(?:several|some|a few|a number of|various|numerous|many|multiple)\b",
         result,
-        re.I,
+        re.IGNORECASE,
     )
     if not vague:
         return []
