@@ -83,8 +83,12 @@ def cmd_check(args) -> int:
 
     flagged = 0
     total_findings = 0
+    has_high = False
     for r in runs:
         findings = analyse(r)
+        if args.severity:
+            findings = [f for f in findings if f.severity == args.severity]
+        has_high = has_high or any(f.severity == "high" for f in findings)
         if args.severity:
             findings = [f for f in findings if f.severity == args.severity]
         if not findings:
@@ -105,7 +109,6 @@ def cmd_check(args) -> int:
         "[dim]These are hints, not verdicts: go read the run.[/]"
     )
     # Exit non-zero only on high severity, so this is usable in CI without being a nuisance.
-    has_high = any(f.severity == "high" for r in runs for f in analyse(r))
     return 1 if (has_high and args.strict) else 0
 
 
@@ -201,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
 
     c = sub.add_parser("check", help="flag suspicious results")
     c.add_argument("--severity", choices=["high", "medium", "low"], help="only this severity")
-    c.add_argument("--strict", action="store_true", help="exit 1 if any high severity finding")
+    c.add_argument("--strict", action="store_true", help="exit 1 if any displayed high severity finding")
     c.set_defaults(func=cmd_check)
 
     s = sub.add_parser("show", help="read one run in full")
