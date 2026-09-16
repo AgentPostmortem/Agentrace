@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from agentrace import cli
+from agentrace.checks import Finding
 from agentrace.parse import AgentRun
 
 
@@ -152,3 +153,22 @@ def test_check_prints_bracketed_description_literally(monkeypatch, capsys):
 
     assert cli.cmd_check(Namespace(severity=None, strict=False)) == 0
     assert "run [bold]pwned[/bold] test" in capsys.readouterr().out
+
+
+def test_check_analyses_each_run_once_and_strict_respects_severity(monkeypatch):
+    start = datetime(2026, 1, 1, tzinfo=UTC)
+    runs = [
+        AgentRun("toolu_one", "one", "p", "r", start, start + timedelta(seconds=1)),
+        AgentRun("toolu_two", "two", "p", "r", start, start + timedelta(seconds=1)),
+    ]
+    calls = []
+
+    def fake_analyse(run):
+        calls.append(run.tool_use_id)
+        return [Finding("test", "high", "message")]
+
+    monkeypatch.setattr(cli, "_load", lambda args: runs)
+    monkeypatch.setattr(cli, "analyse", fake_analyse)
+
+    assert cli.cmd_check(Namespace(severity="low", strict=True)) == 0
+    assert calls == ["toolu_one", "toolu_two"]
