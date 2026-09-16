@@ -85,7 +85,8 @@ def cmd_check(args) -> int:
     total_findings = 0
     has_high = False
     for r in runs:
-        findings = analyse(r)
+        slow_seconds = getattr(args, "slow_seconds", 900.0)
+        findings = analyse(r) if slow_seconds == 900.0 else analyse(r, slow_s=slow_seconds)
         if args.severity:
             findings = [f for f in findings if f.severity == args.severity]
         has_high = has_high or any(f.severity == "high" for f in findings)
@@ -204,6 +205,12 @@ def main(argv: list[str] | None = None) -> int:
 
     c = sub.add_parser("check", help="flag suspicious results")
     c.add_argument("--severity", choices=["high", "medium", "low"], help="only this severity")
+    c.add_argument(
+        "--slow-seconds",
+        type=float,
+        default=900.0,
+        help="flag runs longer than this many seconds (default: 900)",
+    )
     c.add_argument("--strict", action="store_true", help="exit 1 if any displayed high severity finding")
     c.set_defaults(func=cmd_check)
 

@@ -336,10 +336,13 @@ CHECKS: list[Callable[[AgentRun], list[Finding]]] = [
 ]
 
 
-def analyse(run: AgentRun) -> list[Finding]:
+def analyse(run: AgentRun, slow_s: float = 900.0) -> list[Finding]:
     findings: list[Finding] = []
     for check in CHECKS:
-        findings.extend(check(run))
+        if check is check_runaway:
+            findings.extend(check_runaway(run, slow_s=slow_s))
+        else:
+            findings.extend(check(run))
     order = {"high": 0, "medium": 1, "low": 2}
     findings.sort(key=lambda f: order.get(f.severity, 9))
     return findings
