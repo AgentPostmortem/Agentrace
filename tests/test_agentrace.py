@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from agentrace import cli
 from agentrace.checks import analyse
@@ -329,6 +329,15 @@ def test_slow_run_is_flagged():
         ended_at=datetime(2026, 7, 16, 12, 30, tzinfo=UTC),
     )
     assert "slow_run" in _codes(r)
+
+
+def test_slow_run_threshold_is_configurable():
+    start = datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
+    thirty_minutes = _run(started_at=start, ended_at=start + timedelta(minutes=30))
+    two_minutes = _run(started_at=start, ended_at=start + timedelta(minutes=2))
+
+    assert "slow_run" not in {f.check for f in analyse(thirty_minutes, slow_s=1801)}
+    assert "slow_run" in {f.check for f in analyse(two_minutes, slow_s=60)}
 
 
 def test_clean_run_produces_nothing():

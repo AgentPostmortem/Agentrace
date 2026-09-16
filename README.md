@@ -83,6 +83,7 @@ agentrace list                  # every subagent run: description, duration, siz
 agentrace check                 # flag suspicious results
 agentrace check --severity high # only the ones that definitely matter
 agentrace check --strict        # exit 1 on any high finding (CI-friendly)
+agentrace check --slow-seconds 300 # tune the slow-run threshold (default: 900)
 agentrace show 6e7fAJ8T         # read one run in full: prompt, result, findings
 agentrace stats --json          # aggregate, machine-readable
 ```

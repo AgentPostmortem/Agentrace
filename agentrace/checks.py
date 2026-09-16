@@ -115,6 +115,50 @@ def check_destructive_command(run: AgentRun) -> list[Finding]:
     return []
 
 
+def check_risky_verdict(run: AgentRun) -> list[Finding]:
+    """A confident operational recommendation with no supporting artifact."""
+    action = r"(?:delet(?:e|ed|ing)|drop(?:ped|ping)?|deploy(?:ed|ing)?|merg(?:e|ed|ing)|revok(?:e|ed|ing)|force[- ]push(?:ed|ing)?)"
+    verdict_patterns = [
+        rf"\b(?:safe|okay|ok|fine|reasonable|appropriate|approved?|ready)\s+to\s+(?:\w+\s+){{0,3}}{action}\b",
+        rf"\b(?:go ahead(?: and)?|proceed(?: with)?|recommend(?:ed|ation)?(?: is|:)?|you (?:can|should|may))\s+(?:\w+\s+){{0,3}}{action}\b",
+        rf"\b{action}\b(?:\s+\w+){{0,4}}\s+(?:is|looks?)\s+(?:safe|okay|fine|approved?|ready)\b",
+        rf"\b{action}\b[^.\n]{{0,80}}\bgo ahead\b",
+    ]
+    evidence_patterns = [
+        r"```[\s\S]*?```",
+        r"`[^`\n]+`",
+        r"(?m)^\s{4,}\S",
+        r"(?m)^(?:diff --git |Index: |@@\s|[+-]{3}\s+\S)",
+        r"(?<![\w/])(?:\.{1,2}/|/[^\s]+|[\w.-]+/[\w./-]+)(?::\d+)?\b",
+        r"(?<![\w/])(?:[\w-]+\.)+[A-Za-z][A-Za-z0-9_-]{0,7}\b",
+        r"(?<![\w/])(?:[\w.-]+/)*[\w-]+\.[A-Za-z][A-Za-z0-9_-]{0,7}:\d+\b",
+        r"[\"“'](?=[^\"\n“”']{0,240}\b(?:SELECT|INSERT|UPDATE|DELETE\s+FROM|DROP\s+TABLE|pytest|npm\s+test|make\s+test|passed|failed|rows?|exit\s+code|HTTP\s+\d{3})\b)[^\"\n“”']+[\"”']",
+    ]
+    verdict = None
+    for pattern in verdict_patterns:
+        match = re.search(pattern, run.result, re.IGNORECASE)
+        if match:
+            verdict = match
+            break
+    if not verdict:
+        return []
+
+    preceding = run.result[max(0, verdict.start() - 40) : verdict.start()]
+    if re.search(r"\b(?:do not|don't|cannot|can't|should not|shouldn't|never|avoid|not)\b", preceding, re.IGNORECASE):
+        return []
+    if any(re.search(pattern, run.result, re.IGNORECASE) for pattern in evidence_patterns):
+        return []
+
+    return [
+        Finding(
+            "risky_verdict",
+            "medium",
+            "Risky operational verdict has no supporting file, code, command, or test evidence.",
+            _context(run.result, verdict.start()),
+        )
+    ]
+
+
 def check_unverified_claim(run: AgentRun) -> list[Finding]:
     """Hedged language presented as a finding.
 
@@ -326,6 +370,7 @@ CHECKS: list[Callable[[AgentRun], list[Finding]]] = [
     check_empty_result,
     check_refused_or_gave_up,
     check_destructive_command,
+    check_risky_verdict,
     check_unverified_claim,
     check_absence_as_evidence,
     check_self_contradiction,
@@ -336,10 +381,13 @@ CHECKS: list[Callable[[AgentRun], list[Finding]]] = [
 ]
 
 
-def analyse(run: AgentRun) -> list[Finding]:
+def analyse(run: AgentRun, slow_s: float = 900.0) -> list[Finding]:
     findings: list[Finding] = []
     for check in CHECKS:
-        findings.extend(check(run))
+        if check is check_runaway:
+            findings.extend(check_runaway(run, slow_s=slow_s))
+        else:
+            findings.extend(check(run))
     order = {"high": 0, "medium": 1, "low": 2}
     findings.sort(key=lambda f: order.get(f.severity, 9))
     return findings
