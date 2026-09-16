@@ -11,23 +11,21 @@ wolf or saying nothing, and both make it worthless.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-
-import pytest
+from datetime import UTC, datetime
 
 from agentrace.checks import analyse
 from agentrace.parse import AgentRun, parse_session
 
 
 def _run(result: str = "x" * 500, prompt: str = "y" * 500, **kw) -> AgentRun:
-    defaults = dict(
-        tool_use_id="toolu_test123456",
-        description="test run",
-        prompt=prompt,
-        result=result,
-        started_at=datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc),
-        ended_at=datetime(2026, 7, 16, 12, 1, tzinfo=timezone.utc),
-    )
+    defaults = {
+        "tool_use_id": "toolu_test123456",
+        "description": "test run",
+        "prompt": prompt,
+        "result": result,
+        "started_at": datetime(2026, 7, 16, 12, 0, tzinfo=UTC),
+        "ended_at": datetime(2026, 7, 16, 12, 1, tzinfo=UTC),
+    }
     defaults.update(kw)
     return AgentRun(**defaults)
 
@@ -292,8 +290,8 @@ def test_unquantified_clean_when_result_has_counts():
 
 def test_slow_run_is_flagged():
     r = _run(
-        started_at=datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc),
-        ended_at=datetime(2026, 7, 16, 12, 30, tzinfo=timezone.utc),
+        started_at=datetime(2026, 7, 16, 12, 0, tzinfo=UTC),
+        ended_at=datetime(2026, 7, 16, 12, 30, tzinfo=UTC),
     )
     assert "slow_run" in _codes(r)
 

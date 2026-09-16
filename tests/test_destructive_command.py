@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from agentrace.checks import analyse
 from agentrace.parse import AgentRun
@@ -10,8 +10,8 @@ def _run(result: str) -> AgentRun:
         description="test run",
         prompt="Review the operation and report what should be run.",
         result=result,
-        started_at=datetime(2026, 7, 16, 12, 0, tzinfo=timezone.utc),
-        ended_at=datetime(2026, 7, 16, 12, 1, tzinfo=timezone.utc),
+        started_at=datetime(2026, 7, 16, 12, 0, tzinfo=UTC),
+        ended_at=datetime(2026, 7, 16, 12, 1, tzinfo=UTC),
     )
 
 
