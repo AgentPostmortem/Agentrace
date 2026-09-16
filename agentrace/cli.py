@@ -122,8 +122,21 @@ def cmd_show(args) -> int:
     if not match:
         console.print(f"[red]No run matching {args.id!r}[/]")
         return 1
-    r = match[0]
-    console.print(f"[bold]{escape(r.description)}[/]  [dim]{escape(r.tool_use_id)}[/]")
+    exact = next((r for r in match if r.tool_use_id == args.id), None)
+    if exact is not None:
+        r = exact
+    elif len(match) > 1:
+        console.print(f"[red]Run ID {args.id!r} is ambiguous. Matching runs:[/]")
+        for candidate in match:
+            description = candidate.description or "(none)"
+            console.print(f"  {escape(candidate.tool_use_id)}  {escape(description)}")
+        console.print("Please provide a more specific run ID.")
+        return 1
+    else:
+        r = match[0]
+    console.print(
+        f"[bold]{escape(r.description or '(none)')}[/]  [dim]{escape(r.tool_use_id)}[/]"
+    )
     console.print(f"[dim]duration: {r.duration_s}s | background: {r.background}[/]\n")
     console.print("[bold cyan]PROMPT[/]")
     console.print(escape(r.prompt[: args.max]) if r.prompt[: args.max] else "[dim](empty)[/]")
