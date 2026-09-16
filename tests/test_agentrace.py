@@ -11,8 +11,10 @@ wolf or saying nothing, and both make it worthless.
 from __future__ import annotations
 
 import json
+from argparse import Namespace
 from datetime import UTC, datetime
 
+from agentrace import cli
 from agentrace.checks import analyse
 from agentrace.parse import AgentRun, parse_session
 
@@ -190,6 +192,39 @@ def test_tool_use_without_id_is_skipped(tmp_path):
     )
     s = parse_session(p)
     assert s.runs == []
+
+
+# --------------------------------------------------------------------------- show
+
+
+def test_show_rejects_ambiguous_short_id(monkeypatch, capsys):
+    runs = [
+        _run(tool_use_id="toolu_alpha_shared", description="alpha"),
+        _run(tool_use_id="toolu_beta_shared", description=None),
+    ]
+    monkeypatch.setattr(cli, "_load", lambda args: runs)
+
+    assert cli.cmd_show(Namespace(id="shared", max=4000)) == 1
+    output = capsys.readouterr().out
+    assert "ambiguous" in output
+    assert "toolu_alpha_shared" in output
+    assert "alpha" in output
+    assert "toolu_beta_shared" in output
+    assert "(none)" in output
+
+
+def test_show_prefers_exact_id_over_suffix_match(monkeypatch, capsys):
+    runs = [
+        _run(tool_use_id="shared", description=None),
+        _run(tool_use_id="toolu_other_shared", description="other"),
+    ]
+    monkeypatch.setattr(cli, "_load", lambda args: runs)
+
+    assert cli.cmd_show(Namespace(id="shared", max=4000)) == 0
+    output = capsys.readouterr().out
+    assert "(none)" in output
+    assert "shared" in output
+    assert "toolu_other_shared" not in output
 
 
 # --------------------------------------------------------------------------- checks
