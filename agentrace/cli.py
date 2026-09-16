@@ -92,13 +92,13 @@ def cmd_check(args) -> int:
         flagged += 1
         total_findings += len(findings)
         console.print(
-            f"\n[bold]{r.description or '(no description)'}[/] [dim]{r.tool_use_id[-8:]}[/]"
+            f"\n[bold]{escape(r.description or '(no description)')}[/] [dim]{r.tool_use_id[-8:]}[/]"
         )
         for f in findings:
             colour = _SEV_COLOUR.get(f.severity, "white")
-            console.print(f"  [{colour}]{f.severity:<6}[/] [bold]{f.check}[/]  {f.message}")
+            console.print(f"  [{colour}]{f.severity:<6}[/] [bold]{escape(f.check)}[/]  {escape(f.message)}")
             if f.evidence:
-                console.print(f"         [dim]{f.evidence}[/]")
+                console.print(f"         [dim]{escape(f.evidence)}[/]")
 
     console.print(
         f"\n[bold]{flagged}/{len(runs)}[/] runs flagged, {total_findings} findings. "
@@ -119,18 +119,18 @@ def cmd_show(args) -> int:
         console.print(f"[red]No run matching {args.id!r}[/]")
         return 1
     r = match[0]
-    console.print(f"[bold]{r.description}[/]  [dim]{r.tool_use_id}[/]")
+    console.print(f"[bold]{escape(r.description)}[/]  [dim]{escape(r.tool_use_id)}[/]")
     console.print(f"[dim]duration: {r.duration_s}s | background: {r.background}[/]\n")
     console.print("[bold cyan]PROMPT[/]")
-    console.print(r.prompt[: args.max] or "[dim](empty)[/]")
+    console.print(escape(r.prompt[: args.max]) if r.prompt[: args.max] else "[dim](empty)[/]")
     console.print("\n[bold cyan]RESULT[/]")
-    console.print(r.result[: args.max] or "[dim](empty)[/]")
+    console.print(escape(r.result[: args.max]) if r.result[: args.max] else "[dim](empty)[/]")
     findings = analyse(r)
     if findings:
         console.print("\n[bold cyan]FINDINGS[/]")
         for f in findings:
             colour = _SEV_COLOUR.get(f.severity, "white")
-            console.print(f"  [{colour}]{f.severity:<6}[/] {f.check}: {f.message}")
+            console.print(f"  [{colour}]{f.severity:<6}[/] {escape(f.check)}: {escape(f.message)}")
     return 0
 
 
